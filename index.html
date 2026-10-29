@@ -1690,7 +1690,7 @@ function updatePlayer(dt){
  g=groundAt(P.x,P.z);
  if(swimming){
   P.grounded=false;P.vy=0;
-  var targ=(wy-0.38)+Math.sin(performance.now()*0.0022)*0.05;
+  var targ=(wy-0.32)+Math.sin(performance.now()*0.0022)*0.04;
   P.y+=(targ-P.y)*Math.min(1,dt*5);
  }else if(P.grounded){
   if(P.y-g<0.45){P.y=g;}
@@ -1709,16 +1709,24 @@ function updatePlayer(dt){
  }
  player.position.set(P.x,P.y,P.z);
  player.rotation.y=P.heading;
- player.rotation.x+=((P.swim?0.98:0)-player.rotation.x)*Math.min(1,dt*8);
+ player.rotation.x+=((P.swim?1.12:0)-player.rotation.x)*Math.min(1,dt*8);
+ if(!P.swim){
+  parts.armL.rotation.z*=0.85;parts.armR.rotation.z*=0.85;
+  parts.legL.rotation.z*=0.85;parts.legR.rotation.z*=0.85;
+  parts.armR.rotation.x*=P.swim?1:(1-Math.min(1,dt*8));
+ }
  var spN=Math.min(1,P.speed/8.2);
  P.phase+=P.speed*dt*2.7;
  var amp=0.12+0.55*spN;
  if(P.swim){
-  parts.torso.rotation.x=1.02;
-  parts.armL.rotation.x=Math.sin(P.phase*2)*1.9;
-  parts.armR.rotation.x=-Math.sin(P.phase*2)*1.9;
-  parts.legL.rotation.x=Math.sin(P.phase*4)*0.5;
-  parts.legR.rotation.x=-Math.sin(P.phase*4)*0.5;
+  parts.torso.rotation.x=0;
+  var pull=Math.sin(P.phase*1.2);
+  parts.armL.rotation.x=-1.55+pull*0.95;
+  parts.armR.rotation.x=-1.55+pull*0.95;
+  parts.armL.rotation.z=0.26;parts.armR.rotation.z=-0.26;
+  parts.legL.rotation.x=0.3+Math.sin(P.phase*1.2+0.8)*0.42;
+  parts.legR.rotation.x=0.3+Math.sin(P.phase*1.2+0.8)*0.42;
+  parts.legL.rotation.z=0.16;parts.legR.rotation.z=-0.16;
   parts.torso.position.y=0;
  }else if(P.grounded&&P.speed>0.4){
   parts.legL.rotation.x=Math.sin(P.phase)*amp;
