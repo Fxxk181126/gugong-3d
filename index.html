@@ -27,7 +27,7 @@
       </div>
 
       <div class="g-help" id="g-help">
-        <span>WASD / 方向键 移动</span><span>Shift 疾跑</span><span>空格 跳跃</span>
+        <span>WASD / 方向键 移动</span><span>Shift 疾跑</span><span>空格 跳跃 · 深水自动游泳</span>
         <span>鼠标左/右键拖动 或 Q/E·R/F 自由视角</span><span>滚轮 缩放</span><span>V/按钮 切换视角</span><span>Tab/G 地图</span><span>M 静音</span>
         <span>手柄 左摇杆移动 · 右摇杆视角 · A 跳</span><span>触屏：左半屏移动 · 右半屏视角</span>
       </div>
@@ -291,6 +291,10 @@ function groundAt(x,z){
   if(x>=e.x0&&x<=e.x1&&z>=e.z0&&z<=e.z1){var v2=e.fn(x,z);
    if(v2!=null&&h<0.05)h=v2;break;}}
  return h;}
+var waters=[];
+function addWater(x0,x1,z0,z1,y){waters.push({x0:x0,x1:x1,z0:z0,z1:z1,y:y});}
+function waterAt(x,z){for(var i=0;i<waters.length;i++){var w=waters[i];
+ if(x>=w.x0&&x<=w.x1&&z>=w.z0&&z<=w.z1)return w.y;}return null;}
 
 /* ---------- primitive helpers ---------- */
 function bx(parent,w,h,d,mat,x,y,z,ry,cs){
@@ -658,6 +662,7 @@ function wallSeg(x0,x1,z0,z1,noMap,h,outer){
   bx(scene,w+0.3,0.55,d+0.3,M.marble,cx,0.27,cz);
  }
  addSolid(x0-(x1-x0>=z1-z0?0:0.9),x1+(x1-x0>=z1-z0?0:0.9),z0-(x1-x0>=z1-z0?0.9:0),z1+(x1-x0>=z1-z0?0.9:0),0,h);
+ if(outer){var hz=x1-x0>=z1-z0;addSolid(x0-(hz?0:1.4),x1+(hz?0:1.4),z0-(hz?1.4:0),z1+(hz?1.4:0),-6,0);}
  if(!noMap)mapR(x0-1,z0-1,x1+1,z1+1,outer?'#8a8175':'#7a2f24',.9);
 }
 
@@ -835,14 +840,15 @@ function waterPlane(w,d,x,z,y){
  var m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),M.water);
  m.rotation.x=-Math.PI/2;m.position.set(x,y,z);scene.add(m);
  var b=new THREE.Mesh(new THREE.PlaneGeometry(w,d),M.dark);
- b.rotation.x=-Math.PI/2;b.position.set(x,y-0.55,z);scene.add(b);
+ b.rotation.x=-Math.PI/2;b.position.set(x,y-2.45,z);scene.add(b);
+ addWater(x-w/2,x+w/2,z-d/2,z+d/2,y);
  mapR(x-w/2,z-d/2,x+w/2,z+d/2,'#3a7ca8',.95);}
 waterPlane(914,56,0,611,-1.8);
 waterPlane(914,56,0,-498,-1.8);
 waterPlane(56,1166,-430,-56.5,-1.8);
 waterPlane(56,1166,430,-56.5,-1.8);
-flatH(-458,458,583,639,-2.7,true);flatH(-458,458,-526,-470,-2.7,true);
-flatH(-458,-402,-526,639,-2.7,true);flatH(402,458,-526,639,-2.7,true);
+flatH(-458,458,583,639,-4.2,true);flatH(-458,458,-526,-470,-4.2,true);
+flatH(-458,-402,-526,639,-4.2,true);flatH(402,458,-526,639,-4.2,true);
 function curb(x0,x1,z0,z1){
  var cx=(x0+x1)/2,cz=(z0+z1)/2;
  bx(scene,Math.max(x1-x0,0.9),0.5,Math.max(z1-z0,0.9),M.marble,cx,0.0,cz);}
@@ -858,11 +864,12 @@ curb(-376,-375,-526,-472);curb(-377,-376,-470,582);
  var m=new THREE.Mesh(new THREE.PlaneGeometry(756,30),M.water);
  m.rotation.x=-Math.PI/2;m.position.set(0,-1.6,383);scene.add(m);
  var b=new THREE.Mesh(new THREE.PlaneGeometry(756,30),M.dark);
- b.rotation.x=-Math.PI/2;b.position.set(0,-2.25,383);scene.add(b);
+ b.rotation.x=-Math.PI/2;b.position.set(0,-3.55,383);scene.add(b);
  mapR(-378,368,378,398,'#3a7ca8',.95);
  bx(scene,756,0.6,1.2,M.marble,0,0.05,367.4);
  bx(scene,756,0.6,1.2,M.marble,0,0.05,398.6);
- addH(-378,378,368,398,function(){return -2.35;},true);
+ addH(-378,378,368,398,function(){return -3.4;},true);
+ addWater(-378,378,368,398,-1.6);
  var gaps=[[-49.5,-38.5],[-27.5,-16.5],[-5.5,5.5],[16.5,27.5],[38.5,49.5]];
  function bankSolids(z0,z1){
   var segs=[[-378,378]];
@@ -876,7 +883,7 @@ curb(-376,-375,-526,-472);curb(-377,-376,-470,582);
    segs=out;}
   for(i=0;i<segs.length;i++)addSolid(segs[i][0],segs[i][1],z0,z1,0,2.2);
  }
- bankSolids(366.6,368.0);bankSolids(398.0,399.4);
+ bankSolids(367.72,368.0);bankSolids(398.0,398.28);
  for(var i2=0;i2<5;i2++)bridge([-44,-22,0,22,44][i2],383,'z',20,6.5,1.5);
 })();
 
@@ -1334,6 +1341,7 @@ function buildHuman(c){
 }
 var playerParts=buildHuman({cloth:M.cloth,pants:M.pants,hair:M.hair,elf:true,ponytail:true});
 var player=playerParts.g,parts=playerParts.parts;
+player.rotation.order='YXZ';
 scene.add(player);
 var P={x:0,y:0,z:560,vx:0,vz:0,vy:0,heading:Math.PI,grounded:true,phase:0,speed:0};
 player.position.set(0,0,170);
@@ -1614,6 +1622,11 @@ function resolveSolids(){
    else if(m===dzl)P.z=s.z0-R;else P.z=s.z1+R;
   }}
 }
+function solidOverlapAt(x,z,py){
+ for(var i=0;i<solids.length;i++){var s=solids[i];
+  if(x+R>s.x0&&x-R<s.x1&&z+R>s.z0&&z-R<s.z1&&py+1.55>s.y0&&py+0.25<s.y1)return true;}
+ return false;
+}
 /* NPC(人形)身体碰撞: 径向推出, 不可穿过侍卫/宫女 */
 function resolveNpcs(){
  for(var i=0;i<npcs.length;i++){var n=npcs[i];
@@ -1640,20 +1653,26 @@ function updatePlayer(dt){
  var fx=-Math.sin(camYaw),fz=-Math.cos(camYaw);
  var rx2=-fz,rz2=fx;
  var mx=fx*iz+rx2*ix, mz=fz*iz+rz2*ix;
- var inWater=P.y<-0.15;
- var sprint=(keys.ShiftLeft||keys.ShiftRight||PAD.sprint||Math.hypot(joyV.x,joyV.y)>0.92)&&il>0.1&&!inWater;
- var spd=(sprint?8.2:4.5)*(inWater?0.55:1);
+ var wy=waterAt(P.x,P.z),g0=groundAt(P.x,P.z);
+ var swimming=wy!=null&&(wy-g0)>1.05&&P.y<wy-0.5;
+ P.swim=swimming;
+ var inWater=wy!=null&&P.y<wy+0.05;
+ var sprint=(keys.ShiftLeft||keys.ShiftRight||PAD.sprint||Math.hypot(joyV.x,joyV.y)>0.92)&&il>0.1&&(!inWater||swimming);
+ var spd=swimming?(sprint?5.4:3.2):(sprint?8.2:4.5)*(inWater?0.55:1);
  P.speed=Math.hypot(P.vx,P.vz);
  P.inZ=iz;
  var tvx=mx*spd,tvz=mz*spd;
- var k=P.grounded?1-Math.exp(-dt*12):1-Math.exp(-dt*2.6);
+ var k=(P.grounded||swimming)?1-Math.exp(-dt*12):1-Math.exp(-dt*2.6);
  P.vx+=(tvx-P.vx)*k;P.vz+=(tvz-P.vz)*k;
  var nx=P.x+P.vx*dt,nz=P.z;
  var g=groundAt(nx,nz);
- if(!(g-P.y>0.55)||P.y-g<-0.01){P.x=nx;}
+ var allow=swimming?2.6:0.55;
+ if(!(g-P.y>allow)||P.y-g<-0.01){
+  if(!swimming||!solidOverlapAt(nx,nz,P.y))P.x=nx;}
  nz=P.z+P.vz*dt;
  g=groundAt(P.x,nz);
- if(!(g-P.y>0.55)||P.y-g<-0.01){P.z=nz;}
+ if(!(g-P.y>allow)||P.y-g<-0.01){
+  if(!swimming||!solidOverlapAt(P.x,nz,P.y))P.z=nz;}
  resolveSolids();
  resolveNpcs();
  // 脚步声: 按步距触发, 疾跑步频更快, 落水为涉水声
@@ -1662,8 +1681,16 @@ function updatePlayer(dt){
   var stride=sprint?1.55:1.15;
   if(P.stepAcc>stride){P.stepAcc=0;footstep(inWater?0.085:0.045+0.05*(P.speed/8.2),inWater);}
  }else{P.stepAcc=0.6;}
+ if(P.swim&&P.speed>0.8){
+  P.swimAcc=(P.swimAcc||0)+P.speed*dt;
+  if(P.swimAcc>2.4){P.swimAcc=0;footstep(0.05,true);}
+ }
  g=groundAt(P.x,P.z);
- if(P.grounded){
+ if(swimming){
+  P.grounded=false;P.vy=0;
+  var targ=(wy-0.38)+Math.sin(performance.now()*0.0022)*0.05;
+  P.y+=(targ-P.y)*Math.min(1,dt*5);
+ }else if(P.grounded){
   if(P.y-g<0.45){P.y=g;}
  }else{
   P.vy-=17*dt;P.y+=P.vy*dt;
@@ -1680,10 +1707,18 @@ function updatePlayer(dt){
  }
  player.position.set(P.x,P.y,P.z);
  player.rotation.y=P.heading;
+ player.rotation.x+=((P.swim?0.98:0)-player.rotation.x)*Math.min(1,dt*8);
  var spN=Math.min(1,P.speed/8.2);
  P.phase+=P.speed*dt*2.7;
  var amp=0.12+0.55*spN;
- if(P.grounded&&P.speed>0.4){
+ if(P.swim){
+  parts.torso.rotation.x=1.02;
+  parts.armL.rotation.x=Math.sin(P.phase*2)*1.9;
+  parts.armR.rotation.x=-Math.sin(P.phase*2)*1.9;
+  parts.legL.rotation.x=Math.sin(P.phase*4)*0.5;
+  parts.legR.rotation.x=-Math.sin(P.phase*4)*0.5;
+  parts.torso.position.y=0;
+ }else if(P.grounded&&P.speed>0.4){
   parts.legL.rotation.x=Math.sin(P.phase)*amp;
   parts.legR.rotation.x=-Math.sin(P.phase)*amp;
   parts.armL.rotation.x=-Math.sin(P.phase)*amp*0.7;
