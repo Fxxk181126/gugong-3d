@@ -529,7 +529,7 @@ function bridge(cx,cz,axis,len,w,apex){
   var y0=apex*Math.sin(Math.PI*t0),y1=apex*Math.sin(Math.PI*t1);
   var off=-(len/2)+(i+0.5)*sl;
   var m=bx(g,axis==='z'?w:sl+0.12,0.55,axis==='z'?sl+0.12:w,M.marble,
-   axis==='z'?cx:cx+off,(y0+y1)/2+0.1,axis==='z'?cz+off:cz);
+   axis==='z'?cx:cx+off,(y0+y1)/2-0.175,axis==='z'?cz+off:cz);
   m.rotation[axis==='z'?'x':'z']=-Math.atan2(y1-y0,sl);
   for(var s=-1;s<=1;s+=2){
    var px=axis==='z'?cx+s*(w/2-0.2):cx+off;
@@ -539,6 +539,14 @@ function bridge(cx,cz,axis,len,w,apex){
     axis==='z'?px:cx+off,(y0+y1)/2+1.18,axis==='z'?cz+off:pz);
    r2.rotation[axis==='z'?'x':'z']=-Math.atan2(y1-y0,sl);
   }
+ }
+ // 桥台: 两端石座衔接桥身与河岸
+ for(var e2=0;e2<2;e2++){
+  var o2=(e2?1:-1)*(len/2-1.15);
+  var ax2=cx,az2=cz;
+  if(axis==='z')az2=cz+o2;else ax2=cx+o2;
+  var w2=axis==='z'?w+0.7:2.3, d2=axis==='z'?2.3:w+0.7;
+  bx(scene,w2,2.6,d2,M.marble,ax2,-1.15,az2);
  }
  var hw=w/2;
  (function(cx2,cz2,len2,apex2,axis2){
