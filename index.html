@@ -1445,51 +1445,65 @@ npcHuman([[-5,-300],[-5,-175]],1.2,2,MAID);
 npcCat([-28,28,-388,-312],10,-336,0x8a7a5a);
 npcCat([-28,28,-388,-312],-12,-360,0xd8d2c4);
 
-/* ---------- 游客人群(实例化低模, 密度=日客流映射) ---------- */
+/* ---------- 游客人群(实例化拟人模型, 密度=日客流映射) ---------- */
 var TOUR={daily:5.4,cap:400,n:0,ag:[],inited:false,
  zones:[[-120,120,440,500,2.2],[-120,120,110,300,3],[-40,40,-20,25,1.2],
   [-30,30,-300,-170,1.5],[-40,40,-385,-315,1.3],[-110,110,-395,-215,1],
   [-330,330,55,100,0.6],[240,360,-420,-90,0.5],[-360,-240,-280,60,0.5]]};
 (function initTourists(){
  var cap=TOUR.cap;
- var bodyG=new THREE.BoxGeometry(0.42,0.56,0.26);bodyG.translate(0,1.14,0);
- var headG=new THREE.SphereGeometry(0.145,10,8);headG.translate(0,1.62,0);
- var legG=new THREE.BoxGeometry(0.15,0.5,0.17);legG.translate(0,-0.25,0);
- var wm=function(){return std({color:0xffffff,roughness:.9});};
- TOUR.body=new THREE.InstancedMesh(bodyG,wm(),cap);
- TOUR.head=new THREE.InstancedMesh(headG,wm(),cap);
+ // 拟人部件: 腿/臂原点在关节, 躯干/头/发原点在脚底
+ var legG=new THREE.CylinderGeometry(0.062,0.05,0.9,7);legG.translate(0,-0.45,0);
+ var armG=new THREE.CylinderGeometry(0.043,0.036,0.6,7);armG.translate(0,-0.3,0);
+ var torsoG=new THREE.CylinderGeometry(0.165,0.122,0.54,8);torsoG.scale(1.5,1,0.8);torsoG.translate(0,1.21,0);
+ var headG=new THREE.SphereGeometry(0.115,10,8);headG.translate(0,1.6,0);
+ var hairG=new THREE.SphereGeometry(0.123,10,8);hairG.scale(1,0.72,1);hairG.translate(0,1.665,-0.012);
+ var wm=function(){return std({color:0xffffff,roughness:.88});};
  TOUR.legs=new THREE.InstancedMesh(legG,wm(),cap*2);
- TOUR.body.frustumCulled=TOUR.head.frustumCulled=TOUR.legs.frustumCulled=false;
- scene.add(TOUR.body);scene.add(TOUR.head);scene.add(TOUR.legs);
+ TOUR.arms=new THREE.InstancedMesh(armG,wm(),cap*2);
+ TOUR.torso=new THREE.InstancedMesh(torsoG,wm(),cap);
+ TOUR.head=new THREE.InstancedMesh(headG,wm(),cap);
+ TOUR.hair=new THREE.InstancedMesh(hairG,wm(),cap);
+ var mi;for(mi=0;mi<5;mi++){var m=[TOUR.legs,TOUR.arms,TOUR.torso,TOUR.head,TOUR.hair][mi];m.frustumCulled=false;scene.add(m);}
  TOUR.dum=new THREE.Object3D();
  TOUR.col=new THREE.Color();
- TOUR.shirts=[0xc23b2e,0x2e5aac,0xd8d3c8,0x5a5a5a,0x2f7d55,0xe0a832,0x7a4d9e,0x30343c,0xb8687f];
- TOUR.pants=[0x2b2f38,0x4a4038,0x33424f,0x565049];
+ TOUR.shirts=[0xc23b2e,0x2e5aac,0xe4ded2,0x5a5f66,0x2f7d55,0xe0a832,0x8a4f9e,0x2f3742,0xc06f85,0x7c8c99,0x985722];
+ TOUR.pants=[0x2b2f38,0x4a4038,0x33424f,0x565049,0x6e6a5e];
  TOUR.skins=[0xf0c8a0,0xd9a878,0xb9825a,0x8a5f3f];
- // 预生成满容量代理
+ TOUR.hairs=[0x17130f,0x2e2114,0x54371e,0x80807e,0xc9a35a];
  var zw=0,i;for(i=0;i<TOUR.zones.length;i++)zw+=TOUR.zones[i][4];
- function pickZone(){var r=Math.random()*zw,a=0;for(var j=0;j<TOUR.zones.length;j++){a+=TOUR.zones[j][4];if(r<=a)return j;}return 0;}
+ function pickZone(){var r=Math.random()*zw,a2=0;for(var j=0;j<TOUR.zones.length;j++){a2+=TOUR.zones[j][4];if(r<=a2)return j;}return 0;}
  function ptIn(z){var Z=TOUR.zones[z];return [Z[0]+Math.random()*(Z[1]-Z[0]),Z[2]+Math.random()*(Z[3]-Z[2])];}
  for(i=0;i<cap;i++){
   var zi=pickZone(),pt=ptIn(zi),tries=0;
   while(groundAt(pt[0],pt[1])<-0.2&&tries++<8)pt=ptIn(zi);
   var tp=ptIn(zi);
-  TOUR.ag.push({x:pt[0],z:pt[1],tx:tp[0],tz:tp[1],zi:zi,spd:1+Math.random()*0.9,ph:Math.random()*6.28,h:0});
+  var child=Math.random()<0.08;
+  TOUR.ag.push({x:pt[0],z:pt[1],tx:tp[0],tz:tp[1],zi:zi,spd:(child?0.8:1)+Math.random()*0.7,
+   ph:Math.random()*6.28,h:0,wait:0,s:child?0.72+Math.random()*0.06:0.92+Math.random()*0.16,
+   sleeve:Math.random()<0.55?1:0,photo:Math.random()<0.3?1:0});
  }
- // 一次性配色
  for(i=0;i<cap;i++){
-  TOUR.col.setHex(TOUR.shirts[i%TOUR.shirts.length]);TOUR.body.setColorAt(i,TOUR.col);
-  TOUR.col.setHex(TOUR.skins[(i*7)%TOUR.skins.length]);TOUR.head.setColorAt(i,TOUR.col);
+  var a=TOUR.ag[i];
+  TOUR.col.setHex(TOUR.shirts[i%TOUR.shirts.length]);TOUR.torso.setColorAt(i,TOUR.col);
+  TOUR.col.setHex(a.sleeve?TOUR.shirts[i%TOUR.shirts.length]:TOUR.skins[(i*7)%TOUR.skins.length]);
+  TOUR.arms.setColorAt(i*2,TOUR.col);TOUR.arms.setColorAt(i*2+1,TOUR.col);
   TOUR.col.setHex(TOUR.pants[(i*3)%TOUR.pants.length]);
   TOUR.legs.setColorAt(i*2,TOUR.col);TOUR.legs.setColorAt(i*2+1,TOUR.col);
+  TOUR.col.setHex(TOUR.skins[(i*5)%TOUR.skins.length]);TOUR.head.setColorAt(i,TOUR.col);
+  TOUR.col.setHex(TOUR.hairs[(i*3+1)%TOUR.hairs.length]);TOUR.hair.setColorAt(i,TOUR.col);
  }
- TOUR.body.instanceColor.needsUpdate=true;TOUR.head.instanceColor.needsUpdate=true;TOUR.legs.instanceColor.needsUpdate=true;
+ [TOUR.torso,TOUR.arms,TOUR.legs,TOUR.head,TOUR.hair][0].instanceColor.needsUpdate=true;
+ TOUR.arms.instanceColor.needsUpdate=true;TOUR.legs.instanceColor.needsUpdate=true;
+ TOUR.head.instanceColor.needsUpdate=true;TOUR.hair.instanceColor.needsUpdate=true;
  TOUR.inited=true;
 })();
 function setTourists(daily){
  TOUR.daily=Math.max(0.5,Math.min(8,daily));
  var n=Math.min(TOUR.cap,Math.round(TOUR.daily*50));
- TOUR.n=n;TOUR.body.count=n;TOUR.head.count=n;TOUR.legs.count=n*2;
+ TOUR.n=n;
+ TOUR.torso.count=n;TOUR.head.count=n;TOUR.hair.count=n;
+ TOUR.arms.count=n*2;TOUR.legs.count=n*2;
  var btn=document.getElementById('g-tourbtn');
  if(btn)btn.textContent='游客 · '+TOUR.daily.toFixed(1)+'万';
  var val=document.getElementById('g-tourval');
@@ -1504,27 +1518,46 @@ function updateTourists(dt){
  var d=TOUR.dum;
  for(var i=0;i<TOUR.n;i++){var a=TOUR.ag[i];
   var dx=a.tx-a.x,dz=a.tz-a.z,dd=Math.hypot(dx,dz);
+  var moving=false;
   if(dd<0.6){var tp,tries=0;
-   do{tp=[0,0];var Z=TOUR.zones[a.zi];tp[0]=Z[0]+Math.random()*(Z[1]-Z[0]);tp[1]=Z[2]+Math.random()*(Z[3]-Z[2]);}while(groundAt(tp[0],tp[1])<-0.2&&tries++<4);
+   do{var Z=TOUR.zones[a.zi];tp=[Z[0]+Math.random()*(Z[1]-Z[0]),Z[2]+Math.random()*(Z[3]-Z[2])];}while(groundAt(tp[0],tp[1])<-0.2&&tries++<4);
    a.tx=tp[0];a.tz=tp[1];a.wait=1+Math.random()*4;
   }else if(a.wait>0){a.wait-=dt;}
   else{
+   moving=true;
    a.x+=dx/dd*a.spd*dt;a.z+=dz/dd*a.spd*dt;
-   a.h=Math.atan2(dx,dz);a.ph+=a.spd*dt*2.6;
+   a.h=Math.atan2(dx,dz);
   }
+  a.ph+=(moving?a.spd:0.5)*dt*2.6;
   var g=groundAt(a.x,a.z);if(g<-0.2)g=0;
-  var bob=Math.abs(Math.sin(a.ph))*0.035;
-  d.position.set(a.x,g+bob,a.z);d.rotation.set(0,a.h,0);d.updateMatrix();
-  TOUR.body.setMatrixAt(i,d.matrix);TOUR.head.setMatrixAt(i,d.matrix);
-  var sw=Math.sin(a.ph)*(a.wait>0?0:0.55);
-  d.position.set(a.x+Math.cos(a.h)*0.095,g,a.z-Math.sin(a.h)*0.095);
-  d.rotation.set(sw,a.h,0);d.updateMatrix();
+  var s=a.s;
+  var bob=moving?Math.abs(Math.sin(a.ph))*0.035*s:0;
+  var ls=moving?Math.sin(a.ph)*0.52:0;
+  var asw=moving?-Math.sin(a.ph)*0.42:Math.sin(a.ph)*0.05;
+  var rx=Math.cos(a.h),rz=-Math.sin(a.h);
+  d.scale.set(s,s,s);
+  // 腿(髋关节)
+  d.position.set(a.x+rx*0.088*s,g+0.92*s,a.z+rz*0.088*s);
+  d.rotation.set(ls,a.h,0);d.updateMatrix();
   TOUR.legs.setMatrixAt(i*2,d.matrix);
-  d.position.set(a.x-Math.cos(a.h)*0.095,g,a.z+Math.sin(a.h)*0.095);
-  d.rotation.set(-sw,a.h,0);d.updateMatrix();
+  d.position.set(a.x-rx*0.088*s,g+0.92*s,a.z-rz*0.088*s);
+  d.rotation.set(-ls,a.h,0);d.updateMatrix();
   TOUR.legs.setMatrixAt(i*2+1,d.matrix);
+  // 躯干/头/发(脚底原点)
+  d.position.set(a.x,g+bob,a.z);d.rotation.set(0,a.h,0);d.updateMatrix();
+  TOUR.torso.setMatrixAt(i,d.matrix);TOUR.head.setMatrixAt(i,d.matrix);TOUR.hair.setMatrixAt(i,d.matrix);
+  // 臂(肩关节, 反相摆动; 驻留举手拍照)
+  var aL=asw,aR=-asw;
+  if(!moving&&a.photo){aL=-2.45;}
+  d.position.set(a.x+rx*0.225*s,g+bob+1.42*s,a.z+rz*0.225*s);
+  d.rotation.set(aL,a.h,0.09);d.updateMatrix();
+  TOUR.arms.setMatrixAt(i*2,d.matrix);
+  d.position.set(a.x-rx*0.225*s,g+bob+1.42*s,a.z-rz*0.225*s);
+  d.rotation.set(aR,a.h,-0.09);d.updateMatrix();
+  TOUR.arms.setMatrixAt(i*2+1,d.matrix);
  }
- TOUR.body.instanceMatrix.needsUpdate=true;TOUR.head.instanceMatrix.needsUpdate=true;TOUR.legs.instanceMatrix.needsUpdate=true;
+ TOUR.legs.instanceMatrix.needsUpdate=true;TOUR.arms.instanceMatrix.needsUpdate=true;
+ TOUR.torso.instanceMatrix.needsUpdate=true;TOUR.head.instanceMatrix.needsUpdate=true;TOUR.hair.instanceMatrix.needsUpdate=true;
 }
 
 /* ---------- 程序化音频: 脚步/风/鸟鸣/钟声 ---------- */
