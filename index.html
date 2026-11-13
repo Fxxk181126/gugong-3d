@@ -85,12 +85,12 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d0f12;}
 #gugong3d .g-tp-note{font-size:10.5px;color:rgba(245,230,196,.55);margin-top:6px;line-height:1.5;}
 #gugong3d .g-toast{position:absolute;left:50%;top:22%;transform:translateX(-50%);font-family:"Songti SC","STSong",serif;font-size:20px;letter-spacing:.35em;color:#f5e6c4;text-shadow:0 2px 8px rgba(0,0,0,.8);background:rgba(12,10,8,.5);border:1px solid rgba(216,178,92,.5);border-radius:8px;padding:8px 22px;opacity:0;transition:opacity .4s;pointer-events:none;}
 #gugong3d .g-toast.g-show{opacity:1;}
-#gugong3d .g-map{width:132px;height:223px;display:block;}
+#gugong3d .g-map{width:126px;height:322px;display:block;}
 #gugong3d .g-map-n{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.2em;color:var(--g-gold);}
 #gugong3d .g-map-hint{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:.1em;color:rgba(245,230,196,.75);white-space:nowrap;}
 #gugong3d .g-mapwrap{cursor:pointer;pointer-events:auto;}
 #gugong3d .g-mapwrap.g-big{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;background:rgba(12,10,8,.88);padding:14px;}
-#gugong3d .g-mapwrap.g-big .g-map{height:min(670px,calc(100vh - 150px));width:auto;aspect-ratio:624/1056;}
+#gugong3d .g-mapwrap.g-big .g-map{height:min(760px,calc(100vh - 110px));width:auto;aspect-ratio:624/1597;}
 #gugong3d .g-mapwrap.g-big .g-map-hint{font-size:12px;}
 #gugong3d .g-mapwrap.g-big .g-map{cursor:crosshair;}
 #gugong3d .g-mapwrap.g-big .g-map-n{font-size:16px;}
@@ -975,7 +975,7 @@ var sTexS=cloneMap(T.stone,220,71);
 var gS=new THREE.Mesh(new THREE.PlaneGeometry(756,187),std({map:sTexS,roughness:.95}));
 gS.rotation.x=-Math.PI/2;gS.position.set(0,0,491.5);gS.receiveShadow=true;scene.add(gS);
 function outPlane(w,d,x,z,mat){var m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),mat);m.rotation.x=-Math.PI/2;m.position.set(x,0,z);m.receiveShadow=true;scene.add(m);}
-outPlane(1000,320,0,777,M.grass);
+outPlane(1000,850,0,1055,M.grass);
 outPlane(1000,340,0,-692,M.grass);
 outPlane(420,1930,-666,-27.5,M.grass);
 outPlane(420,1930,666,-27.5,M.grass);
@@ -1059,6 +1059,17 @@ makeLabel('午 门',0,27,571);
 /* 午门内广场(城台北) + 华表 */
 huabiao(14,490);huabiao(-14,490);
 for(var i=0;i<7;i++){tree(-70-i*18,470+(i%2)*8,'willow',1.5);tree(70+i*18,470-(i%2)*8,'willow',1.5);}
+
+/* R39 南中轴线 (真实间距: 端门-午门 380m, 天安门-端门 170m; 形制同天安门) */
+gateBase(0,976,66,22,13,[{x:0,hw:4.2,h:6.8},{x:-20,hw:2.6,h:5},{x:20,hw:2.6,h:5}]);
+hall({x:0,y:13,z:976,w:48,d:15,h:6,roofH:6.5,double:true});
+makeLabel('端 门',0,27,976);
+gateBase(0,1168,66,22,13,[{x:0,hw:4.2,h:6.8},{x:-20,hw:2.6,h:5},{x:20,hw:2.6,h:5}]);
+hall({x:0,y:13,z:1168,w:48,d:15,h:6,roofH:6.5,double:true});
+makeLabel('天安门',0,27,1168);
+wallSeg(-46,-40,648,963,null,6);wallSeg(40,46,648,963,null,6);   // 端门-午门朝房红墙
+wallSeg(-46,-40,990,1155,null,6);wallSeg(40,46,990,1155,null,6); // 端门-天安门红墙
+overlay(80,315,0,805,T.stone2,7,27,0.03);                        // 端门御道
 
 /* 四面护城河桥: 南北各三桥对三洞 (午门/神武门), 东西单桥对东华门/西华门 */
 bridge(-18,611,'z',68,9,2.0);bridge(0,611,'z',68,9,2.0);bridge(18,611,'z',68,9,2.0);
@@ -1377,6 +1388,8 @@ var areas=[
  {n:'御花园',s:'宫苑揽胜',x0:-46,x1:46,z0:-391,z1:-310},
  {n:'神武门',s:'紫禁城北门',x0:-30,x1:30,z0:-462,z1:-433},
  {n:'午门',s:'五凤楼 · 紫禁城正门',x0:-32,x1:32,z0:499,z1:527},
+ {n:'端门',s:'中轴重门',x0:-35,x1:35,z0:962,z1:990},
+ {n:'天安门',s:'皇城正门',x0:-35,x1:35,z0:1154,z1:1182},
  {n:'太和门',s:'外朝正门',x0:-40,x1:40,z0:299,z1:331},
  {n:'东六宫',s:'妃嫔寝宫',x0:52,x1:232,z0:-391,z1:-214},
  {n:'西六宫',s:'妃嫔寝宫',x0:-232,x1:-52,z0:-391,z1:-214},
@@ -1408,18 +1421,18 @@ function areaAt(x,z){
 
 /* ---------- minimap (羊皮纸全图) ---------- */
 var mapCv=document.getElementById('g-map');
-mapCv.width=624;mapCv.height=1056;
+mapCv.width=624;mapCv.height=1597;
 var mapG=mapCv.getContext('2d');
-var mapBase=document.createElement('canvas');mapBase.width=624;mapBase.height=1056;
+var mapBase=document.createElement('canvas');mapBase.width=624;mapBase.height=1597;
 (function(){
  var g=mapBase.getContext('2d');
- var sx=624/1000,sz=1056/1250;
+ var sx=624/1000,sz=1597/1890;
  function X(x){return (x+500)*sx;}
  function Z(z){return (z+640)*sz;}
- g.fillStyle='#eadfc6';g.fillRect(0,0,624,1056);
+ g.fillStyle='#eadfc6';g.fillRect(0,0,624,1597);
  g.strokeStyle='rgba(150,125,85,.18)';g.lineWidth=1;
- for(var gx=0;gx<624;gx+=39){g.beginPath();g.moveTo(gx,0);g.lineTo(gx,1056);g.stroke();}
- for(var gy=0;gy<1056;gy+=39){g.beginPath();g.moveTo(0,gy);g.lineTo(624,gy);g.stroke();}
+ for(var gx=0;gx<624;gx+=39){g.beginPath();g.moveTo(gx,0);g.lineTo(gx,1597);g.stroke();}
+ for(var gy=0;gy<1597;gy+=39){g.beginPath();g.moveTo(0,gy);g.lineTo(624,gy);g.stroke();}
  function mc(c){
   if(c==='#3a7ca8')return '#96bad3';
   if(c==='#e8e4da'||c==='#ddd2b4')return '#ddd0ae';
@@ -1432,14 +1445,20 @@ var mapBase=document.createElement('canvas');mapBase.width=624;mapBase.height=10
   g.globalAlpha=r.a*0.9;g.fillStyle=mc(r.c);
   g.fillRect(X(r.x0),Z(r.z0),(r.x1-r.x0)*sx,(r.z1-r.z0)*sz);}
  g.globalAlpha=1;
- g.strokeStyle='#a0392c';g.lineWidth=7;
+ g.strokeStyle='#a0392c';g.lineWidth=9; // R39: 城墙轮廓加粗醒目
  g.strokeRect(X(-379),Z(-473),758*sx,961*sz);
+ g.fillStyle='#7c2b20'; // 四门方标 + 四角楼点标
+ var gps=[[0,571],[0,-447],[374,336],[-374,336]];
+ for(var q2=0;q2<gps.length;q2++)g.fillRect(X(gps[q2][0])-5,Z(gps[q2][1])-5,10,10);
+ var gcs=[[376,583],[-376,583],[376,-472],[-376,-472]];
+ g.fillStyle='#5a4632';
+ for(q2=0;q2<gcs.length;q2++){g.beginPath();g.arc(X(gcs[q2][0]),Z(gcs[q2][1]),4,0,6.283);g.fill();}
 })();
 var mapBig=false;
 function drawMap(px,pz,heading){
- mapG.clearRect(0,0,624,1056);
+ mapG.clearRect(0,0,624,1597);
  mapG.drawImage(mapBase,0,0);
- var sx=624/1000,sz=1056/1250;
+ var sx=624/1000,sz=1597/1890;
  var x=(px+500)*sx,y=(pz+640)*sz;
  if(mapBig){
   mapG.fillStyle='rgba(60,40,20,.92)';
@@ -1898,9 +1917,9 @@ mapWrapEl.addEventListener('click',function(e){
  if(!mapBig){toggleMap();return;} // 小图: 放大
  var r=mapCv.getBoundingClientRect();
  if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){toggleMap();return;} // 边框: 收起
- /* R33 地图传送: 画布像素 → 世界坐标(624×1056 ↔ 1000×1250), 螺旋找无碰撞落点 */
- var cx=(e.clientX-r.left)/r.width*624,cy=(e.clientY-r.top)/r.height*1056;
- var tx=cx/(624/1000)-500,tz=cy/(1056/1250)-640;
+ /* R33 地图传送: 画布像素 → 世界坐标(624×1597 ↔ 1000×1890), 螺旋找无碰撞落点 */
+ var cx=(e.clientX-r.left)/r.width*624,cy=(e.clientY-r.top)/r.height*1597;
+ var tx=cx/(624/1000)-500,tz=cy/(1597/1890)-640;
  var fx=tx,fz=tz;
  for(var rr=0;rr<=40;rr++){
   var rad=rr*0.9;
