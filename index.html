@@ -88,7 +88,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d0f12;}
 #gugong3d .g-map{width:132px;height:223px;display:block;}
 #gugong3d .g-map-n{position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.2em;color:var(--g-gold);}
 #gugong3d .g-map-hint{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:.1em;color:rgba(245,230,196,.75);white-space:nowrap;}
-#gugong3d .g-mapwrap{cursor:pointer;}
+#gugong3d .g-mapwrap{cursor:pointer;pointer-events:auto;}
 #gugong3d .g-mapwrap.g-big{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;background:rgba(12,10,8,.88);padding:14px;}
 #gugong3d .g-mapwrap.g-big .g-map{height:min(670px,calc(100vh - 150px));width:auto;aspect-ratio:624/1056;}
 #gugong3d .g-mapwrap.g-big .g-map-hint{font-size:12px;}
@@ -793,15 +793,66 @@ function tree(x,z,type,s){
  mapR(x-1.2*s,z-1.2*s,x+1.2*s,z+1.2*s,'#4c7a4c',.8);
  return g;
 }
-function lion(x,z,ry){
+/* R35 青铜狮: 须弥座+坐姿躯体+螺卷鬃+项圈铃铛+公踩绣球/母抚幼狮 (female=true 母狮) */
+function lion(x,z,ry,female){
  var g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry||0;g.scale.set(1.3,1.3,1.3);scene.add(g);
- bx(g,1.5,0.5,1.5,M.marble,0,0.25,0);
- sph(g,0.55,M.bronze,0,0.95,0,1,0.85,1.25);
- sph(g,0.42,M.bronze,0,1.5,0.35);
- sph(g,0.5,M.bronze,0,1.42,0.12,1.25,1,1);
- sph(g,0.16,M.bronze,0,1.35,0.72,1,0.8,1);
- sph(g,0.1,M.bronze,-0.28,1.85,0.25);sph(g,0.1,M.bronze,0.28,1.85,0.25);
- bx(g,0.5,0.12,0.7,M.bronze,0,1.75,0.1);
+ /* 须弥座: 下枋+束腰+上枋 (顶面 0.77) */
+ bx(g,1.7,0.22,1.7,M.marble,0,0.11,0);
+ bx(g,1.45,0.3,1.45,M.marble,0,0.37,0);
+ bx(g,1.6,0.25,1.6,M.marble,0,0.645,0);
+ /* 坐姿躯体: 臀部后坐 + 挺胸前倾 */
+ sph(g,0.42,M.bronze,0,1.2,-0.15,1,0.88,1.12);
+ sph(g,0.28,M.bronze,-0.3,1.12,0.05);sph(g,0.28,M.bronze,0.3,1.12,0.05);
+ sph(g,0.3,M.bronze,0,1.32,0.08,1,0.9,1.1);
+ sph(g,0.36,M.bronze,0,1.5,0.24,1,1.02,1.15);
+ /* 前腿: 公狮左爪踩绣球(抬爪) / 母狮右爪抚幼狮(搭爪), 对侧腿直立 */
+ var upX=female?0.26:-0.26, stX=female?-0.26:0.26;
+ cyl(g,0.12,0.1,0.5,M.bronze,upX,1.02,0.44,8);          // 抬起腿(短)
+ sph(g,0.14,M.bronze,upX+(female?0.04:-0.04),1.27,0.5,1.1,0.7,1.25); // 抬爪
+ cyl(g,0.12,0.1,0.68,M.bronze,stX,1.11,0.42,8);          // 直立腿
+ sph(g,0.14,M.bronze,stX,0.88,0.5,1.1,0.7,1.25);         // 站爪
+ for(var t3=0;t3<3;t3++)bx(g,0.07,0.06,0.1,M.bronze,stX+(t3-1)*0.08,0.84,0.62); // 趾
+ /* 头部 + 五官 */
+ var hd=new THREE.Group();hd.position.set(0,1.88,0.38);g.add(hd);
+ sph(hd,0.28,M.bronze,0,0,0,1.05,1,0.95);
+ sph(hd,0.17,M.bronze,0,-0.07,0.2,1.15,0.8,1.05);
+ bx(hd,0.28,0.08,0.14,M.dark,0,-0.13,0.19);
+ cyl(hd,0.016,0.016,0.06,M.bronze,-0.09,-0.1,0.27,5);cyl(hd,0.016,0.016,0.06,M.bronze,0.09,-0.1,0.27,5);
+ cyl(hd,0.014,0.014,0.05,M.bronze,-0.05,-0.17,0.25,5);cyl(hd,0.014,0.014,0.05,M.bronze,0.05,-0.17,0.25,5);
+ bx(hd,0.09,0.06,0.06,M.bronze,0,-0.02,0.33);
+ sph(hd,0.045,M.gold,-0.1,0.08,0.24);sph(hd,0.045,M.gold,0.1,0.08,0.24);
+ bx(hd,0.24,0.045,0.05,M.bronze,0,0.15,0.25);
+ sph(hd,0.08,M.bronze,-0.2,0.17,0.02);sph(hd,0.08,M.bronze,0.2,0.17,0.02);
+ /* 螺卷鬃毛: 外圈12+内圈8+额顶4 (后倾环抱头颈) */
+ var tl=0.6,a5;
+ for(var i5=0;i5<12;i5++){a5=i5/12*Math.PI*2;
+  sph(hd,0.11,M.bronze,Math.cos(a5)*0.34,Math.sin(a5)*0.3*Math.cos(tl),-0.1+Math.sin(a5)*0.3*Math.sin(tl));}
+ for(i5=0;i5<8;i5++){a5=i5/8*Math.PI*2+0.4;
+  sph(hd,0.09,M.bronze,Math.cos(a5)*0.23,Math.sin(a5)*0.2*Math.cos(tl),-0.04+Math.sin(a5)*0.2*Math.sin(tl));}
+ sph(hd,0.08,M.bronze,-0.12,0.26,0.1);sph(hd,0.08,M.bronze,0,0.3,0.08);
+ sph(hd,0.08,M.bronze,0.12,0.26,0.1);sph(hd,0.07,M.bronze,0,0.22,0.22);
+ /* 项圈 + 铃铛 */
+ var co=new THREE.Mesh(new THREE.TorusGeometry(0.26,0.045,8,18),M.gold);
+ co.rotation.x=Math.PI/2-0.25;co.position.set(0,1.72,0.3);co.castShadow=true;g.add(co);
+ sph(g,0.045,M.gold,-0.07,1.6,0.52);sph(g,0.045,M.gold,0,1.59,0.54);sph(g,0.045,M.gold,0.07,1.6,0.52);
+ /* 尾巴沿右背上卷 + 卷毛簇 */
+ bar(g,V3(0.2,1.3,-0.4),V3(0.34,1.75,-0.32),0.05,M.bronze);
+ bar(g,V3(0.34,1.75,-0.32),V3(0.3,2.0,-0.16),0.045,M.bronze);
+ sph(g,0.09,M.bronze,0.3,2.05,-0.12);
+ if(female){
+  /* 母狮: 右爪下仰卧幼狮 */
+  sph(g,0.16,M.bronze,0.36,0.92,0.58,1,0.7,1.2);
+  sph(g,0.1,M.bronze,0.38,1.02,0.72);
+  sph(g,0.03,M.bronze,0.32,1.1,0.7);sph(g,0.03,M.bronze,0.44,1.1,0.7);
+  sph(g,0.05,M.bronze,0.32,1.03,0.54);sph(g,0.05,M.bronze,0.38,1.05,0.5);sph(g,0.05,M.bronze,0.44,1.03,0.54);
+  cyl(g,0.025,0.025,0.14,M.bronze,0.3,1.03,0.66,5);cyl(g,0.025,0.025,0.14,M.bronze,0.46,1.03,0.66,5);
+ }else{
+  /* 公狮: 左爪下绣球 + 金绶带 */
+  sph(g,0.24,M.bronze,upX-0.08,0.99,0.56);
+  var rb2=new THREE.Mesh(new THREE.TorusGeometry(0.24,0.028,8,20),M.gold);
+  rb2.rotation.x=0.7;rb2.rotation.z=0.5;rb2.position.set(upX-0.08,0.99,0.56);rb2.castShadow=true;g.add(rb2);
+  bx(g,0.1,0.08,0.06,M.gold,upX-0.08,1.24,0.56);
+ }
  addSolid(x-1.4,x+1.4,z-1.4,z+1.4,0,2.8);
  mapR(x-1.4,z-1.4,x+1.4,z+1.4,'#4f4638',.9);
 }
@@ -1002,7 +1053,7 @@ hall({x:62.5,y:8.5,z:472,w:16,d:11,h:4.2,roofH:3.8,ridge:.55});
 hall({x:-62.5,y:8.5,z:472,w:16,d:11,h:4.2,roofH:3.8,ridge:.55});
 hall({x:62.5,y:8.5,z:545,w:16,d:11,h:4.2,roofH:3.8,ridge:.55});
 hall({x:-62.5,y:8.5,z:545,w:16,d:11,h:4.2,roofH:3.8,ridge:.55});
-lion(11,545,0.3);lion(-11,545,-0.3);
+lion(11,545,0.3);lion(-11,545,-0.3,true);
 makeLabel('午 门',0,27,571);
 
 /* 午门内广场(城台北) + 华表 */
@@ -1040,7 +1091,7 @@ stairs(-20,303.6,'z',-1,3.6,8,0,2.4);stairs(20,303.6,'z',-1,3.6,8,0,2.4);
 stairs(-20,330,'z',1,3.6,8,2.4,0);stairs(20,330,'z',1,3.6,8,2.4,0);
 stairs(-3.25,303.6,'z',-1,3.6,6.5,0,2.4,true);stairs(-3.25,330,'z',1,3.6,6.5,2.4,0,true);
 hall({x:0,y:2.4,z:315,w:56,d:11,h:5.5,roofH:5,double:true,bigDoor:true});
-lion(12,331.5,0.2);lion(-12,331.5,-0.2);
+lion(12,331.5,0.2);lion(-12,331.5,-0.2,true);
 mapR(-20,300,-12,303.6,'#e8e4da');mapR(12,300,20,303.6,'#e8e4da');
 // 太和门两侧庑墙 + 昭德/贞度门（每侧留 6m 门洞）, 连接东西协力门区
 wallSeg(44,150,313.7,316.3,null,10);wallSeg(32,38,313.7,316.3,null,10);
@@ -1128,7 +1179,7 @@ ridgeSet(scene,32,11,0.55,4.2,1.4+4.6+2.35,0,-115);
 addSolid(-16,16,-119.5,-110.5,7,11);
 bx(scene,14,4.2,1.2,M.glaze,29,2.1,-115);addSolid(22,36,-115.6,-114.4,0,4.2);
 bx(scene,14,4.2,1.2,M.glaze,-29,2.1,-115);addSolid(-36,-22,-115.6,-114.4,0,4.2);
-lion(8,-107.5,0.2);lion(-8,-107.5,-0.2);
+lion(8,-107.5,0.2);lion(-8,-107.5,-0.2,true);
 mapR(-16,-119.5,16,-110.5,'#d9a53e');
 makeLabel('乾清门',0,13,-115);
 

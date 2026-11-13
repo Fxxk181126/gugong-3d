@@ -265,6 +265,12 @@
 **修复**：开口 x 范围 ±5 → ±7（[-7,7,-312,-157]），±5/±6 柱移除，收边柱退到 ±8 台缘两侧。
 **验证**：乾清宫前台阶仰视——台阶口无柱、栏杆两侧收边；坤宁门北阶同样干净；回归行走 8.66u、errbox 空。**教训：gap 边界值不能恰好等于建筑构件边界，留 ≥1 柱距余量。**
 
+## R35（用户报障"Tab 放大后点击不了地图地面，点击后还是移动视角"）地图点击穿透修复
+**根因**：`.g-hud{pointer-events:none}` **继承**到 `.g-mapwrap`（无覆盖）——真实点击的命中测试穿透地图元素落到 `g-canvas`，触发画布拖拽转视角。R33 的测试用 `dispatchEvent` 合成派发**绕过命中测试**（事件直达目标元素），所以没暴露。`.g-viewbtn/.g-tourpanel` 各自显式 `pointer-events:auto`，唯独 mapwrap 漏了——小地图"点按放大"对真实鼠标同样一直是坏的（此前只有 Tab/G 键可用）。
+**修复**：一行 CSS `.g-mapwrap{cursor:pointer;pointer-events:auto;}`。
+**验证方法论**：`document.elementFromPoint(x,y)` 与真实输入走**同一套命中测试**——线上旧版地图中心命中 `g-canvas`（复现用户 bug）；新版命中 `g-map`；再以"elementFromPoint 元素 + 派发 click"走完整链路：小图点开大图 → 大图点御花园 → 传送 (0,-350) y=1.1、toast"传送至 · 御花园"、自动收图、**camYaw 全程不变**（无转视角）、errbox 空。另证：CUA 坐标点击在折叠窗格不产生 DOM 事件（document 级探针全空），Playwright locator click 的 actionability 在 IAB 桥上超时——两者都不可靠。
+**教训：测"点击 UI 生效"必须走命中测试路径（elementFromPoint + 派发），dispatchEvent 只能测 handler 逻辑，测不出 pointer-events/遮挡类 bug。**
+
 ## 待办（按价值排序，下轮自主取舍）
 1. WebAudio 环境音：脚步(随速度)、风声鸟鸣底噪、太和门钟声彩蛋（AudioContext 已就绪，ac 存于 window.__ggAC）。
 2. 视觉：屋脊走兽(太和殿 10 兽列)、内金水河曲线化(现为直带)、旗帜/灯笼陈设、广场砖缝明暗变化。

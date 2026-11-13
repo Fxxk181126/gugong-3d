@@ -3,6 +3,7 @@
 日期格式：`YYYY-MM-DD`。
 
 ## 2026-11-13
+- fix: 地图点击穿透——.g-hud 的 pointer-events:none 继承到地图容器，真实点击命中游戏画布变成转视角；为 .g-mapwrap 显式开启 pointer-events:auto（小地图点按放大同时修复）。影响：`index.html`、`gugong-notes.md`(R35)。
 - fix: 后三宫栏杆开口边界压台阶——开口 x±5 与台阶宽严格重合致两根望柱立在乾清宫前阶/坤宁门北阶两角，开口放宽至 ±7。影响：`index.html`、`gugong-notes.md`(R34)。
 - feat: 地图点击传送——放大地图后点击任意位置即传送角色（自动避让建筑城墙、落点贴地含高台、落水自动浮泳），toast 显示目的地后自动收图。影响：`index.html`、`gugong-notes.md`(R33)。
 - fix: 台阶通道栏杆清理——三层台基栏杆开口用的是旧布局坐标（南/东侧全部台阶口被栏杆横穿，北面上层差一边界值），改为按各层实际边缘独立开口；北面中/下级台阶错位 8m 归位贴台边；后三宫南阶从台体内移出可见。影响：`index.html`、`gugong-notes.md`(R32)。
