@@ -92,6 +92,7 @@ html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#0d0f12;}
 #gugong3d .g-mapwrap.g-big{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;background:rgba(12,10,8,.88);padding:14px;}
 #gugong3d .g-mapwrap.g-big .g-map{height:min(670px,calc(100vh - 150px));width:auto;aspect-ratio:624/1056;}
 #gugong3d .g-mapwrap.g-big .g-map-hint{font-size:12px;}
+#gugong3d .g-mapwrap.g-big .g-map{cursor:crosshair;}
 #gugong3d .g-mapwrap.g-big .g-map-n{font-size:16px;}
 #gugong3d .g-banner{position:absolute;top:26%;left:0;right:0;text-align:center;opacity:0;transform:translateY(10px);transition:opacity .9s ease,transform .9s ease;}
 #gugong3d .g-banner.g-show{opacity:1;transform:translateY(0);}
@@ -1836,10 +1837,33 @@ var mapWrapEl=document.getElementById('g-mapwrap');
 function toggleMap(){
  mapBig=!mapBig;mapWrapEl.classList.toggle('g-big',mapBig);
  var h=mapWrapEl.querySelector('.g-map-hint');
- if(h)h.textContent=mapBig?'点击收起':'点按放大';
+ if(h)h.textContent=mapBig?'点击地图任意处传送 · 点边缘收起':'点按放大';
  if(mapBig&&document.pointerLockElement){try{document.exitPointerLock();}catch(e3){}}
 }
-mapWrapEl.addEventListener('click',function(){toggleMap();});
+mapWrapEl.addEventListener('click',function(e){
+ if(!mapBig){toggleMap();return;} // 小图: 放大
+ var r=mapCv.getBoundingClientRect();
+ if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){toggleMap();return;} // 边框: 收起
+ /* R33 地图传送: 画布像素 → 世界坐标(624×1056 ↔ 1000×1250), 螺旋找无碰撞落点 */
+ var cx=(e.clientX-r.left)/r.width*624,cy=(e.clientY-r.top)/r.height*1056;
+ var tx=cx/(624/1000)-500,tz=cy/(1056/1250)-640;
+ var fx=tx,fz=tz;
+ for(var rr=0;rr<=40;rr++){
+  var rad=rr*0.9;
+  for(var aa=0;aa<(rr?10:1);aa++){
+   var ang=aa/10*Math.PI*2;
+   var qx=tx+(rr?Math.cos(ang)*rad:0),qz=tz+(rr?Math.sin(ang)*rad:0);
+   var gy=groundAt(qx,qz);
+   if(!solidOverlapAt(qx,qz,gy)){fx=qx;fz=qz;rr=99;break;}
+  }
+ }
+ P.x=fx;P.z=fz;P.y=groundAt(fx,fz);P.vx=P.vz=P.vy=0;P.grounded=true;P.swim=false;
+ var an=areaAt(fx,fz);
+ toastEl.textContent='传送至 · '+(an?an.n:(fx>159||fx<-159||fz>108||fz<-764?'护城河畔':'紫禁城'));
+ toastEl.classList.add('g-show');
+ if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(function(){toastEl.classList.remove('g-show');},1500);
+ toggleMap();
+});
 var tourBtn=document.getElementById('g-tourbtn'),tourPanel=document.getElementById('g-tourpanel'),tourRange=document.getElementById('g-tourrange');
 tourBtn.addEventListener('click',function(){tourPanel.classList.toggle('g-show');});
 tourRange.addEventListener('input',function(){setTourists(parseFloat(tourRange.value));});
