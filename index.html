@@ -1643,7 +1643,7 @@ var TOUR={daily:5.4,cap:400,n:0,ag:[],inited:false,
  function ptIn(z){var Z=TOUR.zones[z];return [Z[0]+Math.random()*(Z[1]-Z[0]),Z[2]+Math.random()*(Z[3]-Z[2])];}
  for(i=0;i<cap;i++){
   var zi=pickZone(),pt=ptIn(zi),tries=0;
-  while(groundAt(pt[0],pt[1])<-0.2&&tries++<8)pt=ptIn(zi);
+  while((groundAt(pt[0],pt[1])<-0.2||steepAt(pt[0],pt[1]))&&tries++<8)pt=ptIn(zi);
   var tp=ptIn(zi);
   var child=Math.random()<0.08;
   TOUR.ag.push({x:pt[0],z:pt[1],tx:tp[0],tz:tp[1],zi:zi,spd:(child?0.8:1)+Math.random()*0.7,
@@ -1680,6 +1680,9 @@ function setTourists(daily){
  var rg=document.getElementById('g-tourrange');
  if(rg)rg.value=TOUR.daily;
 }
+function steepAt(x,z){ // R38: 台阶坡地检测(1.2m 内高差>0.45), 游客不刷在台阶上
+ return Math.abs(groundAt(x,z)-groundAt(x,z+1.2))>0.45||Math.abs(groundAt(x,z)-groundAt(x+1.2,z))>0.45;
+}
 function updateTourists(dt){
  if(!TOUR.inited||TOUR.n<1)return;
  var d=TOUR.dum;
@@ -1687,7 +1690,7 @@ function updateTourists(dt){
   var dx=a.tx-a.x,dz=a.tz-a.z,dd=Math.hypot(dx,dz);
   var moving=false;
   if(dd<0.6){var tp,tries=0;
-   do{var Z=TOUR.zones[a.zi];tp=[Z[0]+Math.random()*(Z[1]-Z[0]),Z[2]+Math.random()*(Z[3]-Z[2])];}while(groundAt(tp[0],tp[1])<-0.2&&tries++<4);
+   do{var Z=TOUR.zones[a.zi];tp=[Z[0]+Math.random()*(Z[1]-Z[0]),Z[2]+Math.random()*(Z[3]-Z[2])];}while((groundAt(tp[0],tp[1])<-0.2||steepAt(tp[0],tp[1]))&&tries++<8);
    a.tx=tp[0];a.tz=tp[1];a.wait=1+Math.random()*4;
   }else if(a.wait>0){a.wait-=dt;}
   else{
@@ -2314,7 +2317,11 @@ window.__GG={
   return d;
  },
  npcs:function(){var r=[];for(var i=0;i<npcs.length;i++){var n=npcs[i];r.push({t:n.type,x:+n.g.position.x.toFixed(1),z:+n.g.position.z.toFixed(1),wait:+n.wait.toFixed(1)});}return r;},
- tour:function(){return {n:TOUR.n,daily:TOUR.daily,sample:(function(){var r=[];for(var i=0;i<TOUR.n;i+=Math.ceil(TOUR.n/6)){r.push([Math.round(TOUR.ag[i].x),Math.round(TOUR.ag[i].z)]);}return r;})()};},
+ tour:function(x0,z0,x1,z1){var out=[];
+  if(x0!=null){for(var i=0;i<TOUR.n;i++){var A=TOUR.ag[i];
+   if(A.x>=x0&&A.x<=x1&&A.z>=z0&&A.z<=z1)out.push([+A.x.toFixed(1),+A.z.toFixed(1),+A.h.toFixed(2),A.wait>0?'等':'走']);}
+   return {n:TOUR.n,daily:TOUR.daily,inBox:out};}
+  return {n:TOUR.n,daily:TOUR.daily,sample:(function(){var r=[];for(var j=0;j<TOUR.n;j+=Math.ceil(TOUR.n/6)){r.push([Math.round(TOUR.ag[j].x),Math.round(TOUR.ag[j].z)]);}return r;})()};},
  ridges:function(z0,z1){
   var out=[],v=new THREE.Vector3();
   scene.traverse(function(o){
