@@ -136,7 +136,7 @@ var V3=function(x,y,z){return new THREE.Vector3(x,y,z);};
 
 /* ---------- renderer / scene ---------- */
 var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,preserveDrawingBuffer:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.06;
@@ -150,8 +150,8 @@ var hemi=new THREE.HemisphereLight(0xcfe4ff,0x8f8266,0.72);scene.add(hemi);
 var sun=new THREE.DirectionalLight(0xffe8d0,1.12);
 sun.position.set(120,180,90);sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);
-sun.shadow.camera.left=-150;sun.shadow.camera.right=150;
-sun.shadow.camera.top=150;sun.shadow.camera.bottom=-150;
+sun.shadow.camera.left=-110;sun.shadow.camera.right=110;
+sun.shadow.camera.top=110;sun.shadow.camera.bottom=-110;
 sun.shadow.camera.near=20;sun.shadow.camera.far=520;
 sun.shadow.bias=-0.0006;
 scene.add(sun);scene.add(sun.target);
@@ -226,7 +226,10 @@ function updateSky(dt,force){
  var day=(SKY.t>=6&&SKY.t<=18);
  var a=day?(SKY.t-6)/12*Math.PI:((SKY.t-18)/12)*Math.PI; // 太阳/月亮地平弧
  var R=280;
- sun.position.set(Math.cos(a)*R,Math.sin(a)*R*0.9+18,R*0.35);
+ // R30: 阴影相机随玩家走(2m 网格对齐防闪烁), 全城处处有影子
+ var tx=Math.round(P.x/2)*2,tz=Math.round(P.z/2)*2;
+ sun.target.position.set(tx,0,tz);
+ sun.position.set(tx+Math.cos(a)*R,Math.sin(a)*R*0.9+18,tz+R*0.35);
  sun.color.copy(k.sc);sun.intensity=k.si;
  hemi.intensity=k.hi;
  scene.fog.color.copy(k.fog);
@@ -2091,6 +2094,59 @@ function resize(){
 new ResizeObserver(resize).observe(stage);
 resize();
 
+/* ---------- 静态网格合并 (R30 性能): 按区域×材质把上万小 mesh 合成大块,
+   draw call 1万+ → 数百; 动态对象(玩家/NPC/鸟/云/日月/天空球/实例化人群)不参与 ---------- */
+var __merged=0;
+(function mergeStatic(){
+ var roots=[player,sunBall,moonBall,skyMesh];
+ for(var i=0;i<clouds.length;i++)roots.push(clouds[i]);
+ for(i=0;i<birds.length;i++)roots.push(birds[i].g);
+ for(i=0;i<npcs.length;i++)roots.push(npcs[i].g);
+ function dyn(o){while(o){if(roots.indexOf(o)>=0)return true;o=o.parent;}return false;}
+ scene.updateMatrixWorld(true);
+ var buckets={},order=[],v=new THREE.Vector3();
+ scene.traverse(function(o){
+  if(!o.isMesh||o.isInstancedMesh||dyn(o)||!o.visible)return;
+  if(!o.geometry||!o.geometry.attributes.position)return;
+  o.getWorldPosition(v);
+  var key=(v.z>140?0:1)*3+(v.x<-130?0:(v.x>130?2:1)); // 6 个空间分区保留视锥剔除
+  var k2=key+'|'+o.material.uuid;
+  if(!buckets[k2]){buckets[k2]={mat:o.material,list:[]};order.push(k2);}
+  buckets[k2].list.push(o);
+ });
+ function cat(arrs){var len=0,k;for(k=0;k<arrs.length;k++)len+=arrs[k].length;
+  var out=new Float32Array(len),off=0;for(k=0;k<arrs.length;k++){out.set(arrs[k],off);off+=arrs[k].length;}return out;}
+ var dead=[];
+ for(i=0;i<order.length;i++){
+  var b=buckets[order[i]];
+  if(b.list.length<2)continue; // 单件(贴图克隆材质等)保持原样
+  var pos=[],nor=[],uvs=[],uvAll=true;
+  for(var j=0;j<b.list.length;j++){
+   var o2=b.list[j];
+   var g2=o2.geometry.clone().applyMatrix4(o2.matrixWorld);
+   if(g2.index)g2=g2.toNonIndexed();
+   pos.push(g2.attributes.position.array);
+   nor.push(g2.attributes.normal.array);
+   if(g2.attributes.uv)uvs.push(g2.attributes.uv.array);else uvAll=false;
+   g2.dispose();
+  }
+  var mg=new THREE.BufferGeometry();
+  mg.setAttribute('position',new THREE.BufferAttribute(cat(pos),3));
+  mg.setAttribute('normal',new THREE.BufferAttribute(cat(nor),3));
+  if(uvAll)mg.setAttribute('uv',new THREE.BufferAttribute(cat(uvs),2));
+  var mm=new THREE.Mesh(mg,b.mat);
+  mm.castShadow=true;mm.receiveShadow=true;mm.matrixAutoUpdate=false;mm.updateMatrix();
+  scene.add(mm);__merged++;
+  for(j=0;j<b.list.length;j++)dead.push(b.list[j]);
+ }
+ var disposed={};
+ for(i=0;i<dead.length;i++){var d=dead[i];
+  if(d.parent)d.parent.remove(d);
+  if(d.geometry&&!disposed[d.geometry.uuid]){d.geometry.dispose();disposed[d.geometry.uuid]=1;}
+ }
+})();
+renderer.compile(scene,camera); // 预编译全部着色器, 把首次观看的编译卡顿移到加载期
+
 /* ---------- main loop ---------- */
 var last=performance.now();
 function drive(now){
@@ -2121,6 +2177,16 @@ window.__GG={
  pitch:function(v){camPitch=v;},
  time:function(h){if(h!=null)SKY.t=(h%24+24)%24;updateSky(0,true);return {t:SKY.t,mode:SKY.mode,night:+SKY.night.toFixed(2)};},
  skyDataUrl:function(){return skyCv.toDataURL('image/png');},
+ perf:function(){
+  var n=0,k=0;scene.traverse(function(o){if(o.isMesh){if(o.isInstancedMesh)k++;else n++;}});
+  var s=renderer.getSize(new THREE.Vector2());
+  return {meshes:n,instanced:k,calls:renderer.info.render.calls,tris:renderer.info.render.triangles,geoms:renderer.info.memory.geometries,dpr:renderer.getPixelRatio(),w:s.width,h:s.height};
+ },
+ frameMs:function(n){n=n||60;var t0=performance.now();this.step(n);var ms=(performance.now()-t0)/n;return {ms:+ms.toFixed(2),fpsEquiv:+(1000/ms).toFixed(1)};},
+ frameMsAt:function(w,h,n){w=w||1280;h=h||720;n=n||60; // 强制尺寸测帧(窗格折叠时也有效)
+  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+  var t0=performance.now();this.step(n);var ms=(performance.now()-t0)/n;
+  resize();return {ms:+ms.toFixed(2),fpsEquiv:+(1000/ms).toFixed(1),w:w,h:h,dpr:renderer.getPixelRatio()};},
  skyProbe:function(){
   var cs=[];for(var i=0;i<clouds.length;i++){cs.push('#'+clouds[i].material.color.getHexString()+' op'+clouds[i].material.opacity.toFixed(2));}
   var lg=lanternMats.length?('x'+lanternMats.length+' glow:'+lanternMats[0].emissiveIntensity.toFixed(2)):'none';

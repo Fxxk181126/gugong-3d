@@ -234,6 +234,15 @@
 **踩坑记录（白条彗星案）**：夜景满天白色羽状弧条。二分排查（隐藏云/鸟/月/天空球+solo 模式+云染红）最终定位：初版把星星画进 64px 宽天空 canvas，1px 星点被双线性放大 16-240 倍成羽状光带。**教训：低分辨率 skydome 贴图上不能画"需要保持锐小"的元素，改用 Points 屏幕像素点。** 调试钩子留存：`__GG.hideSet/tintClouds/skyEnum/solo/skyDataUrl/skyProbe`。
 **验证**：四时段截图（正午≈基线/黄昏紫灰暮空+初星+灯笼初亮/夜晚深蓝星空+月+灯笼全亮+檐口泛暖光/黎明冷调+灯笼未熄）；回归行走 8.66u、T 键三态循环、HUD 时间行、errbox 空。
 
+## R30（用户报障"进入界面感觉卡顿不流畅"）性能优化：静态网格合并
+**基线测量**（`__GG.perf/frameMs/frameMsAt` 新钩子）：单帧 draw call **10113**、静态 mesh **11296** 个、三角形 82.5 万——全部小 mesh 独立提交，在弱 GPU/Intel 核显/dpr2 视网膜屏上 CPU 提交+GPU 提交双瓶颈。
+**修复（四项）**：
+1. **mergeStatic()**：世界构建完成后，按 6 空间分区（x 三段 × z 两段，保留视锥剔除）× 材质 uuid 分桶，把静态 mesh 的 geometry 经 matrixWorld 变换后 toNonIndexed 拼接成大块（castShadow/receiveShadow 保持，matrixAutoUpdate=false）。动态对象排除：player/npcs/birds/clouds/sunBall/moonBall/skyMesh/InstancedMesh/不可见调试件。单件桶（贴图克隆材质的 overlay 等）不合并。**draw call 10113→656（-94%），mesh 11296→528**，CPU 帧提交 0.7ms→0.14ms（1280×720@dpr1.5 强制尺寸）。碰撞 solids[]、水域 waters[]、地图 mapR 均为纯数据，不受影响。
+2. **renderer.compile(scene,camera)** 构建后预编译全部着色器——把"走进新区域逐材质编译卡顿"移到加载期（DCL 0.36s→0.78s，一次性）。
+3. **dpr 2→1.5**：视网膜屏实际像素 -44%。
+4. **阴影相机跟随玩家**（2m 网格对齐防闪烁，盒 ±150→±110）：顺带修复旧缺陷——原来阴影盒固定以紫禁城原点为中心，玩家在午门/后廷根本看不到影子；现在全城处处有影，且纹素密度提高 36%。
+**验证**：出生点/太和殿正午/乾清门夜景截图与合并前逐项对比无缺件无错位；回归：行走 8.66u/2s、护城河浮泳 y≈-2.4、solidsAt 钩子、errbox 空。合并时小心：`lanternMats` 共享材质的 emissive 动画在合并后仍生效（材质未动）；`__GG.ridges/wire` 等按 M.ridge 遍历的调试钩子合并后只能整体显隐（可接受）。
+
 ## 待办（按价值排序，下轮自主取舍）
 1. WebAudio 环境音：脚步(随速度)、风声鸟鸣底噪、太和门钟声彩蛋（AudioContext 已就绪，ac 存于 window.__ggAC）。
 2. 视觉：屋脊走兽(太和殿 10 兽列)、内金水河曲线化(现为直带)、旗帜/灯笼陈设、广场砖缝明暗变化。
