@@ -566,8 +566,10 @@ function stairs(ax,ay,axis,dir,len,w,h0,h1,deco){
  var g=new THREE.Group();scene.add(g);
  var n=Math.max(3,Math.round(Math.abs(h1-h0)/0.17));
  var sd=len/n;
+ var hMin=Math.min(h0,h1); // R31: 下行台阶(h0>h1)原盒子公式只会上垒→悬空楔块, 改为从地面垒到踏面顶
  for(var i=0;i<n;i++){
-  var bh=(h1-h0)*(i+1)/n, mid=h0+bh/2;
+  var ha=h0+(h1-h0)*i/n, hb2=h0+(h1-h0)*(i+1)/n;
+  var bh=Math.max(ha,hb2), mid=bh/2;
   var off=dir*(i+0.5)*sd;
   var px=axis==='z'?ax:ax+off, pz=axis==='z'?ay+off:ay;
   var sw=axis==='z'?w:sd+0.05, sdp=axis==='z'?sd+0.05:w;
@@ -575,7 +577,7 @@ function stairs(ax,ay,axis,dir,len,w,h0,h1,deco){
  }
  var dl=(h1-h0)/len*dir;
  var slope=Math.atan2(dl,1);
- var railY=h0+0.55;
+ var railY=hMin+0.55;
  for(var s2=-1;s2<=1;s2+=2){
   var rx=axis==='z'?ax+s2*(w/2+0.35):ax+dir*len/2;
   var rz=axis==='z'?ay+dir*len/2:ay+s2*(w/2+0.35);
@@ -588,7 +590,7 @@ function stairs(ax,ay,axis,dir,len,w,h0,h1,deco){
   var sx2=axis==='z'?ax:ax+dir*len/2, sz2=axis==='z'?ay+dir*len/2:ay;
   var sl=bx(g,axis==='z'?dw:len,0.25,axis==='z'?len:dw,null,0,0,0);
   sl.material=new THREE.MeshStandardMaterial({map:cloneMap(T.dgn,2,1),roughness:.8});
-  sl.position.set(sx2,h0+Math.abs(h1-h0)/2+0.16,sz2);
+  sl.position.set(sx2,hMin+Math.abs(h1-h0)/2+0.16,sz2);
   sl.rotation[axis==='z'?'x':'z']=-slope;
   sl.castShadow=true;sl.receiveShadow=true;
  }
