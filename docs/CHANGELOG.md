@@ -3,6 +3,7 @@
 日期格式：`YYYY-MM-DD`。
 
 ## 2026-11-13
+- feat: 青铜狮重制——7 球"雪人"升级为 ~55 部件青铜狮：三层须弥座、坐姿挺胸、24 卷螺卷鬃毛、张口獠牙金瞳、项圈铃铛、卷尾，公狮踩绣球（金绶带）母狮抚仰卧幼狮，三对按"雄东雌西"规制摆放（午门/太和门/乾清门）。影响：`index.html`、`gugong-notes.md`(R36)。
 - fix: 地图点击穿透——.g-hud 的 pointer-events:none 继承到地图容器，真实点击命中游戏画布变成转视角；为 .g-mapwrap 显式开启 pointer-events:auto（小地图点按放大同时修复）。影响：`index.html`、`gugong-notes.md`(R35)。
 - fix: 后三宫栏杆开口边界压台阶——开口 x±5 与台阶宽严格重合致两根望柱立在乾清宫前阶/坤宁门北阶两角，开口放宽至 ±7。影响：`index.html`、`gugong-notes.md`(R34)。
 - feat: 地图点击传送——放大地图后点击任意位置即传送角色（自动避让建筑城墙、落点贴地含高台、落水自动浮泳），toast 显示目的地后自动收图。影响：`index.html`、`gugong-notes.md`(R33)。
